@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>MyVkHandles</title>
+    </head>
+    <body>
+        <script src="node_modules/microevent-github/microevent.js"></script>
+        <script src="node_modules/jquery/dist/jquery.min.js"></script>
+        <script>
+            log = function (d) {
+                console.log(d)
+            };
+
+
+            function VkAjaxClass() {
+                var classContext = this;
+
+                var userConf = {
+                    userId: ''
+                };
+
+                var vkConf = {
+                    query: 'https://api.vk.com/method',
+                    accessToken: '',
+                    apiVersion: '5.52'
+                };
+
+                var urlsConf = {
+                    wallGetPostsCount: {
+                        method: 'wall.get',
+                        parameters: 'count='
+                    },
+                    wallGetPosts: {
+                        method: 'wall.get',
+                        parameters: 'count='
+                    },
+                    wallDeleteSingle: {
+                        method: 'wall.delete',
+                        parameters: 'owner_id=' + userConf.userId + '&post_id='
+                    }
+                };
+
+
+                this.store = {
+                    postsCount: 0,
+                    posts: [],
+                    postsId: []
+                };
+
+
+                var urlConstructor = function( method, parameters, id ) {
+                    var string = '';
+
+                    string = string + vkConf.query + '/';
+                    string = string + method + '?';
+                    string = string + parameters + id + '&';
+                    string = string + 'user_id=' + userConf.userId + '&' + 'access_token=' + vkConf.accessToken + '&' + 'v=' + vkConf.apiVersion;
+
+                    return string;
+                };
+
+
+                this.wallGetPostsCount = function () {
+//                    log( 'begin: posts count get from wall...' );
+
+                    $.ajax(
+                        {
+                            url: urlConstructor( urlsConf.wallGetPostsCount.method, urlsConf.wallGetPostsCount.parameters , 1 ),
+                            method: 'GET',
+                            dataType: 'JSONP',
+                            success: function ( data ) {
+                                classContext.store.postsCount = data.response.count;
+
+
+                                log( 'done: posts count get from wall' );
+                                classContext.trigger('done: posts count get from wall');
+                            }
+                        }
+                    );
+                };
+
+
+                this.wallGetPosts = function () {
+//                    log( 'begin: posts write to store...' );
+
+                    $.ajax(
+                        {
+                            url: urlConstructor( urlsConf.wallGetPosts.method, urlsConf.wallGetPosts.parameters , 2 ),
+                            method: 'GET',
+                            dataType: 'JSONP',
+                            success: function ( data ) {
+                                log( ( data ) );
+
+                                classContext.store.posts = data.response.items;
+
+                                log( 'done: posts write to store' );
+                                classContext.trigger('done: posts write to store');
+                            }
+                        }
+                    );
+                };
+
+
+                this.wallGetPostsId = function () {
+//                    log( 'begin: posts ID write to store...' );
+
+                    var arr = classContext.store.posts;
+                    var postsId = arr.map(function(item) {
+                        return item.id
+                    });
+
+                    classContext.store.postsId = postsId;
+
+                    log('posts ID write to store');
+                    classContext.trigger('done: posts ID write to store');
+                };
+
+
+                this.wallDeletePosts = function () {
+//                    log( 'begin: delete posts from wall...' );
+
+                    var itemsId = classContext.store.postsId;
+                    itemsId.forEach(function(itemId) {
+                        $.ajax(
+                             {
+                                 url: urlConstructor( urlsConf.wallDeleteSingle.method, urlsConf.wallDeleteSingle.parameters, itemId ),
+                                 method: 'POST',
+                                 dataType: 'JSONP',
+                                 success: function (data) {
+                                     log( ('Response from server: ' + JSON.stringify(data)) );
+                                     log( ('#id = ' + itemId + ' removed from wall!') );
+
+                                     itemsId.length--;
+
+//                                     log( ('itemsId.length = ' + itemsId.length ) );
+
+                                     if ( itemsId.length === 0 ) {
+                                         log( 'done: posts removed from wall' );
+                                         classContext.trigger('done: posts removed from wall');
+                                     }
+                                 }
+                             }
+                        );
+                    });
+                }
+            }
+
+
+
+            var vkAjax = new VkAjaxClass;
+
+            MicroEvent.mixin(vkAjax);
+
+        </script>
+        <script>
+
+            function DeleteAllPostsFromWall(ST) {
+                var timer = setInterval(vkAjax.wallGetPostsCount, 1600);
+
+                vkAjax.bind('done: posts write to store', function() {
+                    vkAjax.wallGetPostsId();
+                });
+
+                vkAjax.bind('done: posts ID write to store', function() {
+                    vkAjax.wallDeletePosts();
+                });
+
+                vkAjax.bind('done: posts removed from wall', function() {
+//                    vkAjax.wallGetPostsCount();
+                });
+
+                vkAjax.bind('done: posts count get from wall', function() {
+                    if ( vkAjax.store.postsCount > 0 ) {
+                        vkAjax.wallGetPosts();
+                    } else {
+                        clearInterval( timer );
+                        log( 'Posts not found' );
+                    }
+                });
+            }
+
+            DeleteAllPostsFromWall();
+
+
+            function SimpleTimer() {
+                var counterValue;
+                var timerFrequency  = 1000;
+                var timerBox        = {};
+
+                function counter() {
+                    counterValue = counterValue + timerFrequency;
+                    log( ('timer: Tic ' + counterValue + ' sec.') )
+                }
+
+                this.start = function () {
+                    counterValue = 0;
+                    log( 'timer start' );
+                    log( 'timer counterValue = ' + counterValue );
+                    timerBox.timer = setInterval( counter, timerFrequency);
+                };
+
+                this.stop = function () {
+                    clearInterval(timerBox.timer);
+
+//                    timePassed = counterValue;
+
+                    log( 'timer stoped' );
+                    log( ('time passed = ' + counterValue + ' milisec.') );
+                };
+
+                this.timePassed = counterValue;
+            }
+
+        </script>
+    </body>
+</html>
