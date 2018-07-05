@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>MyVkHandles</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.20/browser.js"></script>
+        <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.20/browser.js"></script>-->
     </head>
     <body>
         <!--<pre>
@@ -29,6 +29,8 @@
 
 
             function VkAjaxClass() {
+                var classContext = this;
+
                 var userConf = {
                     userId: '37858560'
                 };
@@ -40,13 +42,13 @@
                 };
 
                 var urlsConf = {
-                    wallGetAll: {
+                    wallGetPostsCount: {
                         method: 'wall.get',
-                        parameters: 'count=4'
+                        parameters: 'count='
                     },
-                    wallGetSingle: {
-                        method: 'wall.getById',
-                        parameters: 'posts=' + userConf.userId + '_'
+                    wallGetPosts: {
+                        method: 'wall.get',
+                        parameters: 'count='
                     },
                     wallDeleteSingle: {
                         method: 'wall.delete',
@@ -56,7 +58,9 @@
 
 
                 this.store = {
-                    itemsId: []
+                    postsCount: 0,
+                    posts: [],
+                    postsId: []
                 };
 
 
@@ -78,132 +82,182 @@
                 };
 
 
-                function wallGetAll() {
+                this.wallGetPostsCount = function () {
+//                    log( 'begin: posts count get from wall...' );
+
+
+
                     $.ajax(
                         {
-                            url: urlConstructor( urlsConf.wallGetAll.method, urlsConf.wallGetAll.parameters , '' ),
+                            url: urlConstructor( urlsConf.wallGetPostsCount.method, urlsConf.wallGetPostsCount.parameters , 1 ),
                             method: 'GET',
                             dataType: 'JSONP',
                             success: function ( data ) {
-                                log( data.response );
+                                classContext.store.postsCount = data.response.count;
+
+
+                                log( 'done: posts count get from wall' );
+                                classContext.trigger('done: posts count get from wall');
                             }
                         }
                     );
-                }
+                };
 
 
-                function wallGetIdAll() {
+                this.wallGetPosts = function () {
+//                    log( 'begin: posts write to store...' );
+
                     $.ajax(
                         {
-                            url: urlConstructor( urlsConf.wallGetAll.method, urlsConf.wallGetAll.parameters , '' ),
+                            url: urlConstructor( urlsConf.wallGetPosts.method, urlsConf.wallGetPosts.parameters , 2 ),
                             method: 'GET',
                             dataType: 'JSONP',
                             success: function ( data ) {
-                                var arr = data.response.items;
+                                log( ( data ) );
 
-                                var itemsId = arr.map(function(item) {
-                                    return item.id
-                                });
+                                classContext.store.posts = data.response.items;
 
-                                log( 'items id putting in store!' );
-                                store.itemsId = itemsId;
+                                log( 'done: posts write to store' );
+                                classContext.trigger('done: posts write to store');
                             }
                         }
                     );
-                }
+                };
 
 
-                function wallGetSingle( id ) {
-                    $.ajax(
-                        {
-                            url: urlConstructor( urlsConf.wallGetSingle.method, urlsConf.wallGetSingle.parameters, id ),
-                            method: 'GET',
-                            dataType: 'JSONP',
-                            success: function ( data ) {
-                                log( data.response );
-                            }
-                        }
-                    );
-                }
+                this.wallGetPostsId = function () {
+//                    log( 'begin: posts ID write to store...' );
+
+                    var arr = classContext.store.posts;
+                    var postsId = arr.map(function(item) {
+                        return item.id
+                    });
+
+                    classContext.store.postsId = postsId;
+
+                    log('posts ID write to store');
+                    classContext.trigger('done: posts ID write to store');
+                };
 
 
-                function wallDeleteSingle( id ) {
-                    $.ajax(
-                        {
-                            url: urlConstructor( urlsConf.wallDeleteSingle.method, urlsConf.wallDeleteSingle.parameters, id ),
-                            method: 'GET',
-                            dataType: 'JSONP',
-                            success: function ( data ) {
-                                log( data.response + ', post #' + id + ' deleted!' );
-                            }
-                        }
-                    );
-                }
+                this.wallDeletePosts = function () {
+//                    log( 'begin: delete posts from wall...' );
 
+                    var itemsId = classContext.store.postsId;
+                    itemsId.forEach(function(itemId) {
+                        $.ajax(
+                             {
+                                 url: urlConstructor( urlsConf.wallDeleteSingle.method, urlsConf.wallDeleteSingle.parameters, itemId ),
+                                 method: 'POST',
+                                 dataType: 'JSONP',
+                                 success: function (data) {
+                                     log( ('Response from server: ' + JSON.stringify(data)) );
+                                     log( ('#id = ' + itemId + ' removed from wall!') );
 
-                function wallDeleteAll() {
+                                     itemsId.length--;
 
-                    store.itemsId.forEach(function(item) {
-//                    $.ajax(
-//                         {
-//                             url: urlConstructor( urlsConf.wallDeleteSingle.method, urlsConf.wallDeleteSingle.parameters, item.id ),
-//                             method: 'GET',
-//                             dataType: 'JSONP',
-//                             success: function ( data ) {
-//                                 log( data.response );
-//                             }
-//                         }
-//                    );
+//                                     log( ('itemsId.length = ' + itemsId.length ) );
+
+                                     if ( itemsId.length === 0 ) {
+                                         log( 'done: posts removed from wall' );
+                                         classContext.trigger('done: posts removed from wall');
+                                     }
+                                 }
+                             }
+                        );
                     });
                 }
-
-
-                function Xhr1() {
-                    var xhr = new XMLHttpRequest();
-                    xhr.open('GET', 'https://api.vk.com/method/wall.get?user_id=37858560&access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&v=5.52', true);
-
-                    xhr.send();
-
-                    if (xhr.status != 200) {
-                        log( 'Starus = ' + xhr.status + ': ' + xhr.statusText );
-                    } else {
-                        log( xhr.responseText );
-                    }
-                }
-
-//            Xhr1();
-
-
-                function Xhr2() {
-                    var XHR = ("onload" in new XMLHttpRequest()) ? XMLHttpRequest : XDomainRequest;
-                    var xhr = new XHR();
-
-                    xhr.open('GET', 'https://api.vk.com/method/wall.get?user_id=37858560&access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&v=5.52', true);
-//                xhr.setRequestHeader('Origin', '*');
-                    xhr.setRequestHeader('Access-Control-Allow-Headers', '');
-
-                    xhr.onload = function() {
-                        log( this.responseText );
-                    };
-
-                    xhr.onerror = function() {
-                        log( 'Error ' + this.status );
-                    };
-
-                    xhr.send();
-                }
-
-//            Xhr2();
             }
+
+
 
             var vkAjax = new VkAjaxClass;
 
+            MicroEvent.mixin(vkAjax);
+
+
 
         </script>
-        <script type="text/babel">
+        <script>
 
-            vkAjax.wallGetIdAll();
-            log(vkAjax.store.itemsId);
+            function DeleteAllPostsFromWall(ST) {
+                var timer = setInterval(vkAjax.wallGetPostsCount, 1600);
+
+                vkAjax.bind('done: posts write to store', function() {
+                    vkAjax.wallGetPostsId();
+                });
+
+                vkAjax.bind('done: posts ID write to store', function() {
+                    vkAjax.wallDeletePosts();
+                });
+
+                vkAjax.bind('done: posts removed from wall', function() {
+//                    vkAjax.wallGetPostsCount();
+                });
+
+                vkAjax.bind('done: posts count get from wall', function() {
+                    if ( vkAjax.store.postsCount > 0 ) {
+                        vkAjax.wallGetPosts();
+                    } else {
+                        clearInterval( timer );
+                        log( 'Posts not found' );
+                    }
+                });
+            }
+
+            DeleteAllPostsFromWall();
+
+
+
+
+
+
+            function SimpleTimer() {
+                var counterValue;
+                var timerFrequency  = 1000;
+                var timerBox        = {};
+
+                function counter() {
+                    counterValue = counterValue + timerFrequency;
+                    log( ('timer: Tic ' + counterValue + ' sec.') )
+                }
+
+                this.start = function () {
+                    counterValue = 0;
+                    log( 'timer start' );
+                    log( 'timer counterValue = ' + counterValue );
+                    timerBox.timer = setInterval( counter, timerFrequency);
+                };
+
+                this.stop = function () {
+                    clearInterval(timerBox.timer);
+
+//                    timePassed = counterValue;
+
+                    log( 'timer stoped' );
+                    log( ('time passed = ' + counterValue + ' milisec.') );
+                };
+
+                this.timePassed = counterValue;
+            }
+
+
+
+//            var simpleTimer = new SimpleTimer();
+
+
+//            simpleTimer.start();
+//
+//            setTimeout(function() {
+//                simpleTimer.stop();
+//                simpleTimer.start();
+//            }, 2000);
+//
+//
+//            setTimeout(function() {
+//                simpleTimer.stop();
+//            }, 5100);
+
 
         </script>
     </body>
