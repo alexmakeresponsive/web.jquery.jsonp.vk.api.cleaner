@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>MyVkHandles</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.20/browser.js"></script>
+    </head>
+    <body>
+        <!--<pre>
+            id 37858560
+
+            https://oauth.vk.com/authorize?client_id=5490057&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=friends&response_type=token&v=5.52
+
+            https://oauth.vk.com/authorize?client_id=6624690&display=page&redirect_uri=&scope=wall&response_type=token&v=5.52
+
+            https://oauth.vk.com/blank.html#access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&expires_in=86400&user_id=37858560
+
+            access_token 28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6
+
+            https://api.vk.com/method/users.get?user_id=210700286&v=5.52
+        </pre>-->
+
+        <script src="node_modules/microevent-github/microevent.js"></script>
+        <script src="node_modules/jquery/dist/jquery.min.js"></script>
+        <script>
+            log = function (d) {
+                console.log(d)
+            };
+
+
+            function VkAjaxClass() {
+                var userConf = {
+                    userId: '37858560'
+                };
+
+                var vkConf = {
+                    query: 'https://api.vk.com/method',
+                    accessToken: '28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6',
+                    apiVersion: '5.52'
+                };
+
+                var urlsConf = {
+                    wallGetAll: {
+                        method: 'wall.get',
+                        parameters: 'count=4'
+                    },
+                    wallGetSingle: {
+                        method: 'wall.getById',
+                        parameters: 'posts=' + userConf.userId + '_'
+                    },
+                    wallDeleteSingle: {
+                        method: 'wall.delete',
+                        parameters: 'owner_id=' + userConf.userId + '&post_id='
+                    }
+                };
+
+
+                this.store = {
+                    itemsId: []
+                };
+
+
+
+
+
+
+                var urlConstructor = function( method, parameters, id ) {
+                    //url: 'https://api.vk.com/method/wall.get?user_id=37858560&access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&v=5.52',
+
+                    var string = '';
+
+                    string = string + vkConf.query + '/';
+                    string = string + method + '?';
+                    string = string + parameters + id + '&';
+                    string = string + 'user_id=' + userConf.userId + '&' + 'access_token=' + vkConf.accessToken + '&' + 'v=' + vkConf.apiVersion;
+
+                    return string;
+                };
+
+
+                function wallGetAll() {
+                    $.ajax(
+                        {
+                            url: urlConstructor( urlsConf.wallGetAll.method, urlsConf.wallGetAll.parameters , '' ),
+                            method: 'GET',
+                            dataType: 'JSONP',
+                            success: function ( data ) {
+                                log( data.response );
+                            }
+                        }
+                    );
+                }
+
+
+                function wallGetIdAll() {
+                    $.ajax(
+                        {
+                            url: urlConstructor( urlsConf.wallGetAll.method, urlsConf.wallGetAll.parameters , '' ),
+                            method: 'GET',
+                            dataType: 'JSONP',
+                            success: function ( data ) {
+                                var arr = data.response.items;
+
+                                var itemsId = arr.map(function(item) {
+                                    return item.id
+                                });
+
+                                log( 'items id putting in store!' );
+                                store.itemsId = itemsId;
+                            }
+                        }
+                    );
+                }
+
+
+                function wallGetSingle( id ) {
+                    $.ajax(
+                        {
+                            url: urlConstructor( urlsConf.wallGetSingle.method, urlsConf.wallGetSingle.parameters, id ),
+                            method: 'GET',
+                            dataType: 'JSONP',
+                            success: function ( data ) {
+                                log( data.response );
+                            }
+                        }
+                    );
+                }
+
+
+                function wallDeleteSingle( id ) {
+                    $.ajax(
+                        {
+                            url: urlConstructor( urlsConf.wallDeleteSingle.method, urlsConf.wallDeleteSingle.parameters, id ),
+                            method: 'GET',
+                            dataType: 'JSONP',
+                            success: function ( data ) {
+                                log( data.response + ', post #' + id + ' deleted!' );
+                            }
+                        }
+                    );
+                }
+
+
+                function wallDeleteAll() {
+
+                    store.itemsId.forEach(function(item) {
+//                    $.ajax(
+//                         {
+//                             url: urlConstructor( urlsConf.wallDeleteSingle.method, urlsConf.wallDeleteSingle.parameters, item.id ),
+//                             method: 'GET',
+//                             dataType: 'JSONP',
+//                             success: function ( data ) {
+//                                 log( data.response );
+//                             }
+//                         }
+//                    );
+                    });
+                }
+
+
+                function Xhr1() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'https://api.vk.com/method/wall.get?user_id=37858560&access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&v=5.52', true);
+
+                    xhr.send();
+
+                    if (xhr.status != 200) {
+                        log( 'Starus = ' + xhr.status + ': ' + xhr.statusText );
+                    } else {
+                        log( xhr.responseText );
+                    }
+                }
+
+//            Xhr1();
+
+
+                function Xhr2() {
+                    var XHR = ("onload" in new XMLHttpRequest()) ? XMLHttpRequest : XDomainRequest;
+                    var xhr = new XHR();
+
+                    xhr.open('GET', 'https://api.vk.com/method/wall.get?user_id=37858560&access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&v=5.52', true);
+//                xhr.setRequestHeader('Origin', '*');
+                    xhr.setRequestHeader('Access-Control-Allow-Headers', '');
+
+                    xhr.onload = function() {
+                        log( this.responseText );
+                    };
+
+                    xhr.onerror = function() {
+                        log( 'Error ' + this.status );
+                    };
+
+                    xhr.send();
+                }
+
+//            Xhr2();
+            }
+
+            var vkAjax = new VkAjaxClass;
+
+
+        </script>
+        <script type="text/babel">
+
+            vkAjax.wallGetIdAll();
+            log(vkAjax.store.itemsId);
+
+        </script>
+    </body>
+</html>
