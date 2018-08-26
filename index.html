@@ -6,19 +6,6 @@
         <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.20/browser.js"></script>-->
     </head>
     <body>
-        <!--<pre>
-            id 37858560
-
-            https://oauth.vk.com/authorize?client_id=5490057&display=page&redirect_uri=https://oauth.vk.com/blank.html&scope=friends&response_type=token&v=5.52
-
-            https://oauth.vk.com/authorize?client_id=6624690&display=page&redirect_uri=&scope=wall&response_type=token&v=5.52
-
-            https://oauth.vk.com/blank.html#access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&expires_in=86400&user_id=37858560
-
-            access_token 28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6
-
-            https://api.vk.com/method/users.get?user_id=210700286&v=5.52
-        </pre>-->
 
         <script src="node_modules/microevent-github/microevent.js"></script>
         <script src="node_modules/jquery/dist/jquery.min.js"></script>
@@ -32,12 +19,12 @@
                 var classContext = this;
 
                 var userConf = {
-                    userId: '37858560'
+                    userId: ''
                 };
 
                 var vkConf = {
                     query: 'https://api.vk.com/method',
-                    accessToken: '28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6',
+                    accessToken: '',
                     apiVersion: '5.52'
                 };
 
@@ -69,7 +56,6 @@
 
 
                 var urlConstructor = function( method, parameters, id ) {
-                    //url: 'https://api.vk.com/method/wall.get?user_id=37858560&access_token=28ec8a06cda9e06364fac6d2aeaa368377c827248a3c3d67fe1da924e1cf457080c1fdd980f604f7fc4d6&v=5.52',
 
                     var string = '';
 
@@ -205,7 +191,7 @@
                 });
             }
 
-            DeleteAllPostsFromWall();
+//            DeleteAllPostsFromWall();
 
 
 
@@ -213,8 +199,9 @@
 
 
             function SimpleTimer() {
+                var self = this;
                 var counterValue;
-                var timerFrequency  = 1000;
+                var timerFrequency  = 300;
                 var timerBox        = {};
 
                 function counter() {
@@ -223,40 +210,41 @@
                 }
 
                 this.start = function () {
-                    counterValue = 0;
                     log( 'timer start' );
-                    log( 'timer counterValue = ' + counterValue );
+                    counterValue = 0;
                     timerBox.timer = setInterval( counter, timerFrequency);
                 };
 
                 this.stop = function () {
+                    self.timePassed = counterValue;
                     clearInterval(timerBox.timer);
-
-//                    timePassed = counterValue;
-
                     log( 'timer stoped' );
-                    log( ('time passed = ' + counterValue + ' milisec.') );
                 };
-
-                this.timePassed = counterValue;
             }
 
 
 
-//            var simpleTimer = new SimpleTimer();
+            var simpleTimer = new SimpleTimer();
 
 
-//            simpleTimer.start();
-//
-//            setTimeout(function() {
-//                simpleTimer.stop();
-//                simpleTimer.start();
-//            }, 2000);
-//
-//
-//            setTimeout(function() {
-//                simpleTimer.stop();
-//            }, 5100);
+            log( 'R =' + 5000 % 1000 )
+/*
+
+            simpleTimer.start();
+
+            setTimeout(function() {
+                simpleTimer.stop();
+                log( 'TIME PASSED = ' + simpleTimer.timePassed );
+
+                simpleTimer.start();
+            }, 2000);
+
+
+            setTimeout(function() {
+                simpleTimer.stop();
+                log( 'TIME PASSED = ' + simpleTimer.timePassed % 1000 );
+            }, 4100);
+*/
 
 
         </script>
